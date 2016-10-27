@@ -1,0 +1,81 @@
+---
+title: "Bayesean Linear Regression Example"
+output: html_document
+---
+Best guess of $\mu$ that minimizes risk
+![](/Users/kramerPro/Dropbox/Screenshots/Screenshot 2016-10-21 11.01.12.png)
+kinda based on [notes from SFU](http://people.stat.sfu.ca/~lockhart/richard/830/13_3/lectures/bayesian_estimation/notes.pdf)
+
+##Linear Regression
+I'm making up some data based around a Bayseian Estimation example kinda 
+I'm going to think of using regression to try to understand the speed of sound from fake measurements.<p>kasljdfh</p>
+
+Read the wikipedia on the speed of sound and it's way more interesting than I thought, but I think I'm going to start with generating data from the equation $c_{ ideal }\quad =\quad \sqrt { \frac { \gamma \cdot R\cdot T }{ \rho  }  } ,\quad R\~ 8.3144598(48)\cdot J\cdot mol^{ -1 }\cdot K^{ -1 }$
+
+So I'm defining a linear regression that will give me the P(speed|gamma,R,T) from data I make up based on the formula
+```{r}
+library(ggplot2)
+# calorically perfect air
+# ratio of specific heat
+# R = gas constant (286 m^2/s^2/K for air)
+gam_p <- 1.4
+R <- 286 
+n <- 100
+
+# adding some noise
+epsilon = rnorm(n,0,10)
+
+# I want data of y = speed of sound from 273k to 373k degrees
+T <- c(seq(273,373,by = .5))
+# I thought of this as an error in T, but I think the error will propagate
+# the actual error is sqrt(gamma*R*epsilon)
+sigma <- sqrt(gam_p*10) # maybe
+T_error <- T + epsilon 
+T_inC <- T-273
+a_sq_real = R*T*gam_p
+y_real = sqrt(a_sq_real)
+a_sq = R*T_error*gam_p
+
+# I want data of y = speed of sound from 273k to 373k degrees
+y = sqrt(a_sq)
+
+D = data.frame(Temp = T_inC, Measured.Speed = y)
+plot(D)
+
+# r linear model
+lm = lm(D$Measured.Speed ~ D$Temp)
+abline(lm)
+
+# the actual slope is gamma*R
+slp <- sqrt(gam_p*R) # wrong- it's squared - no actual slope --use derivative
+
+# calculated
+inter <- lm$coefficients[2]
+
+```
+
+Okay, so I want to model the P(speed|Temp C) for any given Speed... 
+Is this like P(330|20°) = like 80%
+So... I guess it's N(y|Ax+B,∑)
+
+```{r,}
+
+
+
+Py_x = pnorm(D$Measured.Speed, D$Temp*lm$coefficients[2]+lm$coefficients[1],sigma)
+qplot(D$Temp,Py_x, geom = "point") # doesn't really seem to work
+
+A = lm$coefficients[2]
+B = lm$coefficients[1]
+sigma = 10
+P_330_0 <-09
+
+get_Py_x <- function(speed,temp){
+  ## Okay - this gives the probability of x>X or x<X depending on the lower.tail setting. It's not really the prob of being correct. the prob of a point is 0
+  P <- pnorm(speed, temp*lm$coefficients[2]+lm$coefficients[1],sigma,lower.tail = FALSE)
+  return(P)
+}
+
+```
+
+
